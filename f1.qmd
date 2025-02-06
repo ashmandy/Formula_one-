@@ -1,0 +1,823 @@
+---
+title: "Formula One Analysis"
+author: "Mandy Langlois"
+format: html
+editor: visual
+---
+
+```{r}
+library(lubridate)
+library(ggthemes)
+library(tidyverse)
+library(dplyr)
+library(knitr)
+```
+
+Reading my datasets,producing a table and column names. This code below is reading my driver standing csv.
+
+```{r}
+driver_standings = read.csv(here::here("driver_standings.csv"))
+head(driver_standings)
+```
+
+Reading the CSV for the constructors.
+
+```{r}
+constructors = read.csv(here::here("constructors.csv"))
+head(constructors)
+colnames(constructors)
+```
+
+Reading the CSV for results. produced the table and column names.
+
+```{r}
+results = read.csv(here::here("results.csv"))
+head(results)
+colnames(results)
+```
+
+Reading the CSV for pit stops
+
+```{r}
+pit_stops = read.csv(here::here("pit_stops.csv"))
+head(pit_stops)
+colnames(pit_stops)
+                     
+
+```
+
+Reading the CSV for qualifying
+
+```{r}
+qualifying = read.csv(here::here("qualifying.csv"))
+head(qualifying)
+colnames(qualifying)
+```
+
+Reading the CSV for lap times
+
+```{r}
+lap_times = read.csv(here::here("lap_times.csv"))
+head(lap_times)
+colnames(lap_times)
+```
+
+I want to know what variables are most predictive of race outcome. Is it the lap times, pit stops, or qualifying positions. Before i start to find my answer i want to by filtering out any missing or inconsistent data that may be present in the relevant datasets.
+
+Notes: **(sum(is.na(df\$column_name)) / length(df\$column_name)) \* 100** (to check the percentage of NA values in a column length= nrow or ncol). The sum of NA values in data frame results in column or row "time" divided by the returned number of rows present in the data frame results multiplied by 100 to get me a percentage of NA values
+
+```{r}
+sum(is.na(results$time)) / nrow(results) * 100
+
+```
+
+```{r}
+sum(is.na(qualifying$milliseconds)) / nrow(qualifying) * 100 
+```
+
+Merging data from lap_times, results, qualifying. using common column names like raceID and driverID to merge lap times and results and added the qualifying data to combined data.
+
+**Notes:** **Merging Format**
+
+-   total (any name acceptable) = merge(data frameA, data frameB, by="ID") for
+
+-   total(any name acceptable) = merge(data frameA, data frameB, by=c("ID","Country"))
+
+note, Error code received, 'by' must be specified uniquely valid columns. Error fixed, i wrote raceID instead of raceId. Merge was successful.
+
+```{r}
+lap_results = merge(lap_times, results, by= c("raceId", "driverId"))
+merged_f1 = merge(lap_results, qualifying, by = c("raceId", "driverId"))
+```
+
+**Relationship between qualifying and race results, plus visualizations.**
+
+**Notes:**
+
+-   summary is used as a generic function used to produce result summaries of the results of various model fitting functions.
+
+    -   Smoothing method (function) to use, accepts either Null or a character vector, e.g. "lm", "glm", "gam", "loess" or a function.
+
+    **Analysis:** There is a positive correlation between qualifying position and finishing position, as grid positions determine starting grid positions on race days. This correlation is
+
+```{r}
+summary(merged_f1$position)
+ggplot(merged_f1, aes(x= grid, y = position)) +
+  geom_smooth(method = "lm", color = "lightblue") +
+  labs(title = "Qualifying vs.Finishing position", x= "Qualifying Position", y = "Finishing Position")
+
+```
+
+**Calculating for the average lap time per driver per race.**
+
+Notes:
+
+-   **group_by** = organize data into groups based on the values in one or more columns. with other functions it can be used find the sum, mean, averages or counts for each group. Like sorting a spreadsheet by a specific column for example, a drivers name. Each "group" is like a section of the spreadsheet for that driver, and you can do math or analysis on just that section.
+
+-   **na.rm** = a logical evaluating to TRUE or FALSE , Used when you have missing data and want R to ignore those NA values.
+
+```{r}
+avg_lap_time =  merged_f1 |>
+  filter(!is.na(milliseconds.x)) |>
+  group_by(raceId, driverId) |>
+  summarize(avg_lap_time = mean(milliseconds, na.rm = T))
+
+head(avg_lap_time)
+
+```
+
+multiple columns are named milliseconds.x and milliseconds.y, this might be the reason why im getting NA in my columns. i will atempt to fix it below.
+
+```{r}
+summary(merged_f1$milliseconds.x)
+```
+
+```{r}
+avg_lap_time =  merged_f1 |>
+  group_by(raceId, driverId) |>
+  summarize(avg_lap_time = mean(milliseconds.x, na.rm = T))
+
+head(avg_lap_time)
+```
+
+Renaming milliseconds.x to milliseconds for my sanity.
+
+```{r}
+merged_f1 = merged_f1 |>
+  rename(milliseconds = milliseconds.x)
+
+avg_lap_time =  merged_f1 |>
+  group_by(raceId, driverId) |>
+  summarize(avg_lap_time = mean(milliseconds, na.rm = T))
+
+head(avg_lap_time)
+```
+
+I want to see the correlation between grid and positions.
+
+**Notes:**
+
+-   **cor :** calculates the correlation coefficient between two numeric vectors. A correlation **measures the strength and direction of a linear relationship between two variables**. the correlation coefficient **(r)** always falls between **-1** and **1.**
+
+    1.  A value close to **1** **(r =1)** indicates a strong positive relationship (as one variable increases, the other also increases). perfect positive correlation.
+
+    2.  A value close to **-1 (r = -1)** indicates a strong negative relationship (as one variable increases, the other decreases). perfect negative correlation.
+
+    3.  A value close to **0** **(r= 0 )** indicates no linear relationship. no correlation.
+
+-   "complete.obs" means to use only rows where **both variables have non-missing values**. If either grid or position has NA for a row, that row will be excluded from the correlation calculation.
+
+    **Analysis:** A correlation coefficient of **0.946** is a value close to 1 indicating a strong positive relationship between the starting position and finish position. For example, If Lewis Hamilton started the 2025 Silverstone Grand Prix in pole position (1st) there's a high very high chance of him finishing the ace in 1st or 2nd. my correlation coefficient suggest that grid position is a highly predictive of a win or a podium finish. If Alex Albon in his Williams qualifies 20th and last, the chances are high that he finishes near 20th. with that being said, there are cases where drivers have started last on the grid and end up on the podium, we saw an example of this at the 2021 Brazilian Grand Prix when he started the race weekend in last after taking a engine penalty, and made his way up to first. suggesting, factors like driver skill also plays a significant role.
+
+```{r}
+cor(merged_f1$grid, merged_f1$position, use = "complete.obs")
+```
+
+**looking for the correlation between pit stops and and finishing positions**
+
+raceId: pit stops for specific races
+
+driverId: pit stops to specific drivers
+
+stop: \# of pit stops
+
+milliseconds: duration of pot stops
+
+lap: number of laps before the pit stops
+
+```{r}
+pit_stops = merge(merged_f1, pit_stops,by = c("raceId","driverId"), all.x = T)
+head(pit_stops)
+```
+
+```{r}
+head(pit_stops$`milliseconds.y`)
+head(pit_stops$`milliseconds.y.1`)
+
+
+```
+
+```{r}
+colnames(pit_stops) = make.unique(colnames(pit_stops))
+```
+
+```{r}
+head(pit_stops)
+
+```
+
+```{r}
+colnames(pit_stops)[colnames(pit_stops) == "milliseconds.x"] = "pit_stop_duration"
+```
+
+```{r}
+pit_stops_summary = pit_stops |>
+  group_by(raceId, driverId) |>
+  summarize(
+    avg_pit_duration = mean(pit_stop_duration, na.rm = TRUE),  
+    finishing_position = first(position)  
+  )
+
+```
+
+**Analysis:** This scatter plot shows that, the longer the pit stops the lower your finishing position. Most of the drivers who stopped for 200 or less seconds fish in within point positions (1-10). The spread of points also indicate that other factors other than pit stops duration affect finishing positions, for example, you can see how some drivers who stop for longer than 200 seconds still finishing on the podium, if not 4th place. This suggest that factors other than pit stop duration play a role in finishing positions, factors like racing incidents like crashes that are yellow flagged and require a safety car that virtually allows the drivers to have a free pit stop without major grid position since all car will be going slow/ at a controlled pace behind the safety car. So do red flags, which require the cars to come into the pits and teams are allowed to change tires on their cars giving them a free pit stop without losing track position. other factors that may explain the higher grid finish for drivers with a long pit stops are, driver skills, race strategies to undercut or overcut, and car performance. This analysis confirms that efficient pt stops are important for better race outcomes but they arent the only determinant of success.
+
+```{r}
+ggplot(pit_stops_summary, aes(x = avg_pit_duration / 1000, y = finishing_position)) +
+  geom_point(size = 2, alpha = 0.6) +  
+  geom_smooth(method = "lm", se = FALSE, color = "blue", size = 1) +  
+  labs(
+    title = "Pit Stop Duration vs. Finishing Position",
+    x = "Average Pit Stop Duration (seconds)",  
+    y = "Finishing Position"
+  ) +
+  theme_minimal(base_size = 14)
+```
+
+Calculating for correlation coefficient
+
+```{r}
+correlation = cor(pit_stops_summary$avg_pit_duration, pit_stops_summary$finishing_position, use = "complete.obs" )
+head(correlation)
+```
+
+A table to summarize the data and help better understand the scatter plot above.
+
+```{r}
+summary_table= pit_stops_summary |>
+  summarize(
+    min_pit_stop_duration = min(avg_pit_duration, na.rm = TRUE),
+    max_pit_stop_duration = max(avg_pit_duration, na.rm = TRUE),
+    avg_pit_duration = mean(finishing_position, na.rm= TRUE),
+    total_drivers = n()
+  )
+
+```
+
+```{r}
+kable(summary_table, caption = "Summary of Pit Stop Durations and Finishing Positions")
+```
+
+grouped summary
+
+```{r}
+group_summary = pit_stops_summary |>
+  group_by(raceId) |>
+  summarize(
+    avg_pit_duration = mean(avg_pit_duration, na.rm = TRUE),
+    avg_finishing_position = mean(finishing_position, na.rm = TRUE),  
+    total_drivers = n()
+  )
+
+head(group_summary)
+```
+
+```{r}
+kable(group_summary, caption = "Summary of Pit Stop Duration and Average Finishing Position")
+```
+
+# Next I wanted to explore how much do individual drivers versus constructors (teams) contribute to overall race outcomes.
+
+```{r}
+head(constructors)
+```
+
+```{r}
+head(driver_standings)
+```
+
+```{r}
+driver_data = merge(results, driver_standings, by = c("raceId", "driverId"))
+head(driver_data)
+```
+
+```{r}
+merged_construct = merge(driver_data, constructors, by = "constructorId")
+head(merged_construct)
+```
+
+Summarizing data by constructorId to calculate total points scored by drivers and constructors.
+
+```{r}
+constructor_summary = driver_data |>
+  group_by(constructorId) |>
+  summarize(
+    total_constructor_points = sum(points.x, na.rm = TRUE),
+    avg_constructor_points= mean(points.x, na.rm= TRUE),
+    total_races = n()
+  )
+head(constructor_summary)
+```
+
+summarizing data by driverId to find the average race performance per driver and constructor.
+
+```{r}
+driver_summary = driver_data |>
+  group_by(driverId) |>
+  summarize(
+    total_driver_points = sum(points.x, na.rm = TRUE),
+    avg_driver_points = mean(points.x, na.rm = TRUE),
+    total_races = n()
+  )
+          
+head(driver_summary)
+```
+
+Plotting constructor points
+
+```{r}
+
+top_constructors = constructor_summary |>
+  arrange(desc(total_constructor_points)) |>
+  slice_head(n = 10)
+
+
+ggplot(top_constructors, aes(x = reorder(factor(constructorId), total_constructor_points), y = total_constructor_points)) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  labs(
+    title = "Total Points by Top 10 Constructors",
+    x = "Constructor ID",
+    y = "Total Points"
+  ) +
+  coord_flip() +  
+  theme_minimal()
+  
+```
+
+Plotting driver points
+
+```{r}
+
+top_drivers = driver_summary |>
+  arrange(desc(total_driver_points)) |>
+  slice_head(n = 10)
+```
+
+```{r}
+ggplot(top_drivers, aes(x = reorder(factor(driverId), total_driver_points), y = total_driver_points)) +
+  geom_bar(stat = "identity", fill = "orange") +
+  labs(
+    title = "Total Points by Top 10 Drivers",
+    x = "Driver ID",
+    y = "Total Points"
+  ) +
+  theme_minimal() +
+  coord_flip()
+```
+
+```{r}
+drivers = read.csv(here::here("drivers.csv"))
+head(drivers)
+
+```
+
+```{r}
+constructor_summary_with_names = constructor_summary |>
+  left_join(constructors, by = "constructorId") |>
+  mutate(constructor_name = name)
+head(constructor_summary_with_names)
+
+```
+
+Notes:
+
+filtering only the top 10 constructors, for an easier read.
+
+-   i wanted to use the actual constructor name instead of the constructor ID to make better sense of my data.
+
+```{r}
+top_constructors = constructor_summary_with_names |>
+  arrange(desc(total_constructor_points)) |>
+  slice_head(n = 10)
+```
+
+**Notes:**
+
+-   Coord_flip() flips the x and y axis, turns a vertical graph/chart horizontally. Its useful when there's long labels like the constructors names.
+
+-   stat = identity, tells R to use the actual values from the data instead of counting.
+
+-   theme_minimal(), uses basic formatting and makes the charts easier to read.
+
+```{r}
+ggplot(top_constructors, aes(x = reorder(constructor_name, total_constructor_points), y = total_constructor_points)) +
+  geom_bar(stat = "identity", fill = "purple") +
+  labs(
+    title = "Total Points by Top 10 Constructors",
+    x = "Constructor Name",
+    y = "Total Points"
+  ) +
+  theme_minimal()
+```
+
+Total of races by these top 10 constructors.
+
+```{r}
+total_constrcutor_races = top_constructors |>
+  group_by(constructor_name) |>
+  summarize(
+    total_races =sum(total_races, na.rm = TRUE)
+  )
+head(total_constrcutor_races)
+```
+
+I wanted to merge the data containing the driver names and the data containing total driver points and average driver points
+
+```{r}
+top_drivers = merge(drivers, driver_summary, by = "driverId")
+head(top_drivers)
+```
+
+```{r}
+top_drivers = top_drivers |>
+  arrange(desc(total_driver_points)) |>
+slice_head(n=10)
+```
+
+```{r}
+
+  
+  ggplot(top_drivers, aes(x = reorder(surname, total_driver_points), y = total_driver_points)) +
+  geom_bar(stat = "identity", fill = "orange") +
+    geom_text(aes(label = total_driver_points), hjust = -0.2, size = 3.5) +
+  labs(
+    title = "Total Points by Top 10 Drivers",
+    x = "Driver Names",
+    y = "Total Points"
+  ) +
+    
+  theme_minimal()
+  
+```
+
+```{r}
+top_drivers = top_drivers|>
+  arrange(desc(total_driver_points))|>
+  select(surname, total_driver_points )
+
+  
+   
+head(top_drivers)
+```
+
+The 2025 Formula 1 season will see Lewis Hamilton, one of the most sucesful drivers in f1 history joining the Ferrari, making what will be the most successful driver constructor pairing. Below I will look to make an informed prediction for Ferrari's success with Lewis Hamilton. While this won't be a perfect prediction due to a lack of data, i will use the historical data trends and averages to create an estimate.
+
+For Lewis Hamilton
+
+-   avg points per season
+
+-   points contribution relative to his team. Mercedes and McLaren
+
+```{r}
+seasons = read.csv(here::here("seasons.csv"))
+head(seasons)
+```
+
+```{r}
+races = read.csv(here::here("races.csv"))
+head(races)
+```
+
+Merging race and driver standings.
+
+```{r}
+driver_standings = left_join(driver_standings, races, by = "raceId")
+```
+
+**Notes:**
+
+-   Analyzing Hamilton's performance
+
+-   Replacing Lewis's driver id #1 with his name
+
+    After verifying the the total points by year/seaon scored by LH, i discovered that those total points were wrong from my original data.
+
+-   linear regression model will be used to predict Ferrari's 2025 points based on historical driver and constructor performances. we can find the relationship between:
+
+    a\. Ferrari's past constructor points
+
+    b\. Hamilton's historical points per season
+
+    c\. Hamilton's contribution to his teams (MCLaren, Mercedes) total point
+
+-   **Formula:**
+
+    Predicted Ferrari points = β0 + β1 (Hamilton's Avg points) + β2 (Ferrari's Avg Points)
+
+    **β0=** intercept.
+
+    **β1=** weight assigned to Hamilton's performance.
+
+    **β2=** weight assigned to Ferrari's historical performance.
+
+-   **Time Series Forecasting:** used for long term trends.
+
+    a\. A time series model predicts future performance based on past trends over time.
+
+    b\. looks at Ferrari's constructor points from previous seasons predict their expected 2025 points.
+
+```{r}
+Hamilton_id = 1 
+  Hamilton_perf = driver_standings |>
+  filter(driverId == Hamilton_id) |>
+  group_by(year) |>
+  summarize(total_points = sum(points, na.rm = TRUE))
+  
+  
+  head(Hamilton_perf)
+```
+
+I found some f1 stat solely on lewis on espn
+
+```{r}
+Hamilton_st = read_csv(here::here("Hamilton_st.csv"))
+head(Hamilton_st, 35)
+```
+
+The table above is missing data from 2013-2024. I want to check tyo see if my csv file is fully loaded.
+
+```{r}
+nrow(Hamilton_st)
+  
+```
+
+```{r}
+str(Hamilton_st)
+```
+
+```{r}
+Hamilton_st = Hamilton_st |>
+filter(!is.na(PTS)) 
+head(Hamilton_st, 30)
+```
+
+```{r}
+constructors = read.csv(here::here("constructors.csv"))
+head(constructors)
+```
+
+```{r}
+constructor_standings = read.csv(here::here("constructor_standings.csv"))
+head(constructor_standings)
+```
+
+```{r}
+constructor_results= read.csv(here::here("constructor_results.csv"))
+head(constructor_standings)
+```
+
+```{r}
+constructors = read.csv(here::here("constructors.csv"))
+head(constructor_standings)
+```
+
+```{r}
+races = read.csv(here::here("races.csv"))
+head(races)
+```
+
+```{r}
+Ferrari_stat = constructors |>
+  filter(name == "Ferrari")
+head(Ferrari_stat)
+```
+
+Filtering only Ferrari's season by season
+
+```{r}
+Ferrari_standings = constructor_standings |>
+  filter(constructorId == 6)
+head(Ferrari_standings)
+  
+```
+
+```{r}
+Ferrari_results = constructor_results |>
+  filter(constructorId == 6)
+head(Ferrari_results)
+```
+
+```{r}
+Ferrari_data = merge(Ferrari_standings, Ferrari_results, by = c("constructorId", "raceId"))
+```
+
+```{r}
+Ferrari_data = merge(Ferrari_data, races, by = "raceId")
+
+```
+
+```{r}
+Ferrari_data = merge(Ferrari_data, constructors, by = "constructorId")
+head(Ferrari_data)
+```
+
+```{r}
+ferrari_comb = Ferrari_data |>
+  group_by(year) |>
+  summarize(
+    total_points = max(points.x, na.rm = TRUE),
+    total_wins = sum(wins, na.rm = TRUE),
+    avg_position = mean(position, na.rm = TRUE)
+  )
+head(ferrari_comb, 90)
+```
+
+i wanted to change the column names like YEAR to match my ferrari's dataset
+
+```{r}
+hamilton_data = Hamilton_st |>
+  select(YEAR,PTS, WINS) |>
+  rename(year = YEAR, hamilton_points = PTS,hamilton_wins = WINS)
+head(hamilton_data,50)
+```
+
+**Notes:**
+
+-   **Inner Join:**
+
+    a\. only keeps matches
+
+    b\. used when you only need the rows that exist in both tables.
+
+-   **party analogy example:** if i had a party list that has **Mandy, Ashley, Kharl** and another list that has **Mandy, Ashley, Odin**. Inner join will only keep **Mandy** and **Ashley** because they were on both list.
+
+    **Left Join:**
+
+    a\. keeps all rows from the left, adds matches from the right.
+
+    b\. Used when you want to keep all data from the left and add details if they exist.
+
+-   Lets say the party list has **Mandy, Ashley, Kharl** and another list has **has Mandy, Ashley, Odin. LEFT JOIN** will keep **Mandy, Ashley, Kharl** and since kharl has no match on the second list it will result in a NA.
+
+    **Right Join:**
+
+    a\. keeps all the rows to the right and adss matches from the left.
+
+-   if the party list on the right has **Mandy, Ashley, Odin** and your list has **Mandy, Ashley, Kharl. RIGHT JOIN** will keep **Mandy, Ashley, Odin** but since Odin wasnt on my list it will result in NA
+
+total_points = Ferraris total points
+
+total wins= Ferrari's total wins
+
+avg_positions= Ferrari's average finish position
+
+```{r}
+ferrari_hamilton_data = merge(hamilton_data, ferrari_comb, by = "year" )
+head(ferrari_hamilton_data, 30)
+```
+
+The total_points column representing Ferrari's total points seems off. point totals are abnormaly high for a single season.
+
+```{r}
+summary(ferrari_hamilton_data$total_points)
+
+```
+
+I verified the data under the total_points column by using years 2007-2009 and verifying that the points from my table matches that of the formula one website.
+
+```{r}
+summary(ferrari_comb$total_points)
+head(ferrari_comb,20)
+```
+
+```{r}
+ferrari_comb = ferrari_data |>
+  group_by(year) |>
+  summarize(
+    total_points = max(points.x, na.rm = TRUE),
+    total_wins= n_distinct(raceId[wins > 0]),
+    avg_position = mean(position, na.rm = TRUE)
+  )
+head(ferrari_comb, 70)
+```
+
+Debugging, the race win for 2007 is 9 not 17. all atemps made to fix this failed.
+
+```{r}
+ferrari_wins_check = ferrari_data |>
+  select(year, raceId, wins) |>
+  arrange(year, raceId)
+head(ferrari_wins_check,20)
+```
+
+```{r}
+ferrari_2007 = ferrari_data |> 
+  filter(year == 2007, wins > 0) |>
+  distinct(raceId) |>
+  count()
+
+head(ferrari_2007)
+```
+
+re-merging the new Ferrari data with Hamilton's data.
+
+```{r}
+ferrari_hamilton_merge = merge(hamilton_data, ferrari_comb, by = "year")
+head(ferrari_hamilton_merge)
+```
+
+-   Before merging again, the wins column also has an abnormally high numbers. in 2007 there were 17 Grand Prix, with Ferrari winning 9 of those races. This issue might be ocuring due to duplication in points and wins after merging
+
+-   **n_distinct() :** counts how many different unique values exist in a column. using n_distinct(race_Id\[win ==1\]) will allow me to find the races won by Ferrari. this and anything else i did failed. i will proceed with what i have, keep in mid that my data is lacking.
+
+```{r}
+colnames(ferrari_hamilton_merge) = c("year", "hamilton_points", "hamilton_wins", "ferrari_points", "ferrari_wins")
+head(ferrari_hamilton_merge)
+```
+
+## Building a linear regression model where:
+
+-   Ferrari points are the dependent variable.
+
+-   Hamilton's points are the independent variable.
+
+    **summary(lm_model)** will show**:**
+
+-   **Intercept (β0) =** Ferrari's base performance.
+
+-   **Hamilton's coefficient (β1) =** how much Ferrari's points increase per Hamilton point.
+
+-   **R²=** how well Hamilton's performance will explain Ferrari's points.
+
+    assuming that Lewis scores 400 points this season
+
+    **ferrari_points \~ hamilton_points** tells R that:
+
+-   ferrari's points are the dependent variable ( whats being predicted)
+
+-   hamilton's points are the independent varialble ( the factor that affects ferrari's points).
+
+-   **data= ferrari_hamilton_merge =** tells R to use merged ferrari and hamilton datasets.
+
+**Analysis:**
+
+**Intercept** **(β0) =** 174.47
+
+If Hamilton scores 0 points, Ferrari would still score 174.47 points. Hamilton's coefficient (**β1) = 0.655, meaning for each additional point Hamilton scores, Ferrari's point increases by 0.655.**
+
+Ferrari points = 174.47 + (0.655 X Hamilton points). If Hamilton scores 420 points, 174.47 + (0.655 X 420)= **449.57** **Points** will be scored by Ferrari in 2025.
+
+**Residuals:**
+
+1 year: -41.90 points less than the model predicted
+
+4 year: 64.24 more points than predicted.
+
+**Fitted:**
+
+```{r}
+lm_model = lm(ferrari_points ~ hamilton_points, data = ferrari_hamilton_merge)
+head(lm_model)
+```
+
+```{r}
+hamilton_2025_points = 420
+ferrari_2025_predic = predict(lm_model, newdata = data.frame(hamilton_points =  hamilton_2025_points))
+head(ferrari_2025_predic)
+```
+
+I want to compare Hamilton's impact with Ferrari's historical trend. Comparing regression VS. Time series forecasting.
+
+**Notes:**
+
+Model ARIMA(0,0,0), assumes Ferrari's future points will follow the avg of their past points. With non-zero mean, the model is not predicting Ferrari to score 0 points but instead uses the historical average.
+
+-   the model predict that Ferrari will score 351 points in 2025 based on historical data. According to the chart below, the model is not 100% sure that Ferrari will take 351 points. the model is 80% sure that Ferrari will score between 165-538 points.
+
+-   95% confidence, the model is 95% sure that Ferrari in the wider ranger of 165-538 points.
+
+-   if Ferrari improves they are predicted to score over 500 points. If Ferrari struggles they are expected to score as low as 165 points.
+
+    It is important to not that the model is guessing, so Lewis might change this prediction.
+
+-   forecast helps predict the future.
+
+-   
+
+```{r}
+ferrari_time_series = ts(ferrari_hamilton_merge$ferrari_points, start = min(ferrari_hamilton_merge$year),frequency = 1)
+
+arima_model = auto.arima(ferrari_time_series)
+
+ferrari_forecast = forecast(arima_model, h=1) 
+
+head(ferrari_forecast)
+```
+
+## How Hamilton effect Ferrari.
+
+a positive trend shows that Hamilton will have a positive impact on ferrari.
+
+```{r}
+ggplot(ferrari_hamilton_merge, aes(x = hamilton_points, y = ferrari_points)) +
+  geom_point() + 
+  geom_smooth(method = "lm", se = FALSE) + 
+  labs(title = "Hamilton's Impact on Ferrari Points", 
+       x = "Hamilton's Points", y = "Ferrari's Constructor Points")
+```
+
+```{r}
+plot(ferrari_forecast, main = "Ferrari Constructor Points Forecast (2025)", 
+     xlab = "Year", ylab = "Constructor Points")
+
+```
