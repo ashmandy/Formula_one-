@@ -1,0 +1,2 @@
+"0","Ferrari_data = merge(Ferrari_data, constructors, by = ""constructorId"")"
+"0","head(Ferrari_data)"

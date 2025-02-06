@@ -1,0 +1,2 @@
+"0","colnames(ferrari_hamilton_merge) = c(""year"", ""hamilton_points"", ""hamilton_wins"", ""ferrari_points"", ""ferrari_wins"")"
+"0","head(ferrari_hamilton_merge)"

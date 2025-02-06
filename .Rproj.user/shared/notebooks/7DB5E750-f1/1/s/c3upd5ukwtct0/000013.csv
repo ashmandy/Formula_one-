@@ -1,0 +1,8 @@
+"0","ggplot(top_constructors, aes(x = reorder(constructor_name, total_constructor_points), y = total_constructor_points)) +"
+"0","  geom_bar(stat = ""identity"", fill = ""purple"") +"
+"0","  labs("
+"0","    title = ""Total Points by Top 10 Constructors"","
+"0","    x = ""Constructor Name"","
+"0","    y = ""Total Points"""
+"0","  ) +"
+"0","  theme_minimal()"

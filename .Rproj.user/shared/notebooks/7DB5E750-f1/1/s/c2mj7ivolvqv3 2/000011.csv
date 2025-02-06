@@ -1,0 +1,11 @@
+"0","ggplot(pit_stops_summary, aes(x = avg_pit_duration / 1000, y = finishing_position)) +"
+"0","  geom_point(size = 2, alpha = 0.6) +  "
+"0","  geom_smooth(method = ""lm"", se = FALSE, color = ""blue"", size = 1) +  "
+"0","  labs("
+"0","    title = ""Pit Stop Duration vs. Finishing Position"","
+"0","    x = ""Average Pit Stop Duration (seconds)"",  "
+"0","    y = ""Finishing Position"""
+"0","  ) +"
+"0","  theme_minimal(base_size = 14)"
+"1","[38;5;232m`geom_smooth()` using formula = 'y ~ x'[39m
+"

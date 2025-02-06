@@ -1,0 +1,8 @@
+"0","ferrari_comb = Ferrari_data |>"
+"0","  group_by(year) |>"
+"0","  summarize("
+"0","    total_points = max(points.x, na.rm = TRUE),"
+"0","    total_wins= n_distinct(raceId[wins > 0]),"
+"0","    avg_position = mean(position, na.rm = TRUE)"
+"0","  )"
+"0","head(ferrari_comb, 70)"

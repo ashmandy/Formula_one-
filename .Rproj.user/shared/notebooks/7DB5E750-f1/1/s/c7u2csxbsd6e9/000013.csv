@@ -1,0 +1,2 @@
+"0","driver_standings = read.csv(here::here(""driver_standings.csv""))"
+"0","head(driver_standings)"

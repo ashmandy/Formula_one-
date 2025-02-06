@@ -1,0 +1,3 @@
+"0","Ferrari_stat = constructors |>"
+"0","  filter(name == ""Ferrari"")"
+"0","head(Ferrari_stat)"

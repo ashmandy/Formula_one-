@@ -1,0 +1,1 @@
+"0","colnames(pit_stops)[colnames(pit_stops) == ""milliseconds.x""] = ""pit_stop_duration"""

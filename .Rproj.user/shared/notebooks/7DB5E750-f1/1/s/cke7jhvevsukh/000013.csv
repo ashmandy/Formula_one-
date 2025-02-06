@@ -1,0 +1,6 @@
+"0","ferrari_2007 = Ferrari_data |> "
+"0","  filter(year == 2007, wins > 0) |>"
+"0","  distinct(raceId) |>"
+"0","  count()"
+"0",""
+"0","head(ferrari_2007)"

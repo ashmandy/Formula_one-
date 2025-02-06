@@ -1,0 +1,7 @@
+"0","avg_lap_time =  merged_f1 |>"
+"0","  group_by(raceId, driverId) |>"
+"0","  summarize(avg_lap_time = mean(milliseconds.x, na.rm = T))"
+"1","[38;5;232m`summarise()` has grouped output by 'raceId'. You can override using the `.groups`
+argument.[39m
+"
+"0","head(avg_lap_time)"

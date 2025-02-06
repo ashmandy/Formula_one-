@@ -1,0 +1,2 @@
+"0","ferrari_hamilton_merge = merge(hamilton_data, ferrari_comb, by = ""year"")"
+"0","head(ferrari_hamilton_merge)"

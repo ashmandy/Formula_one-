@@ -1,0 +1,7 @@
+"0","pit_stops = merge(merged_f1, pit_stops,by = c(""raceId"",""driverId""), all.x = T)"
+"2","Warning in merge.data.frame(merged_f1, pit_stops, by = c(""raceId"", ""driverId""),  :"
+"2","
+ "
+"2"," column name ‘milliseconds.y’ is duplicated in the result
+"
+"0","head(pit_stops)"

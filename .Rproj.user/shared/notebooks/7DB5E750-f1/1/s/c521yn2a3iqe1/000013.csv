@@ -1,0 +1,3 @@
+"0","Ferrari_standings = constructor_standings |>"
+"0","  filter(constructorId == 6)"
+"0","head(Ferrari_standings)"

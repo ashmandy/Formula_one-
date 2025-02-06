@@ -1,0 +1,7 @@
+"0","ggplot(ferrari_hamilton_merge, aes(x = hamilton_points, y = ferrari_points)) +"
+"0","  geom_point() + "
+"0","  geom_smooth(method = ""lm"", se = FALSE) + "
+"0","  labs(title = ""Hamilton's Impact on Ferrari Points"", "
+"0","       x = ""Hamilton's Points"", y = ""Ferrari's Constructor Points"")"
+"1","[38;5;232m`geom_smooth()` using formula = 'y ~ x'[39m
+"

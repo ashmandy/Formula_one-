@@ -1,0 +1,4 @@
+"0","ferrari_wins_check = Ferrari_data |>"
+"0","  select(year, raceId, wins) |>"
+"0","  arrange(year, raceId)"
+"0","head(ferrari_wins_check,20)"

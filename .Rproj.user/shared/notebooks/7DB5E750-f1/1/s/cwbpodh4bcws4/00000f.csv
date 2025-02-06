@@ -1,0 +1,8 @@
+"0","summary_table= pit_stops_summary |>"
+"0","  summarize("
+"0","    min_pit_stop_duration = min(avg_pit_duration, na.rm = TRUE),"
+"0","    max_pit_stop_duration = max(avg_pit_duration, na.rm = TRUE),"
+"0","    avg_pit_duration = mean(finishing_position, na.rm= TRUE),"
+"0","    total_drivers = n()"
+"0","  )"
+"0",""

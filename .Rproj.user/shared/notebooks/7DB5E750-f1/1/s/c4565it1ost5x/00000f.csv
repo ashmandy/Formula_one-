@@ -1,0 +1,1 @@
+"0","Ferrari_data = merge(Ferrari_standings, Ferrari_results, by = c(""constructorId"", ""raceId""))"

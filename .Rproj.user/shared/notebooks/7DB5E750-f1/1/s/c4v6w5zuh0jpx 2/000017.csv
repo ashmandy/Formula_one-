@@ -1,0 +1,8 @@
+"0","constructor_summary = driver_data |>"
+"0","  group_by(constructorId) |>"
+"0","  summarize("
+"0","    total_constructor_points = sum(points.x, na.rm = TRUE),"
+"0","    avg_constructor_points= mean(points.x, na.rm= TRUE),"
+"0","    total_races = n()"
+"0","  )"
+"0","head(constructor_summary)"

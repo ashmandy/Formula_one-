@@ -1,0 +1,17 @@
+"0","avg_lap_time =  merged_f1 |>"
+"0","  filter(!is.na(milliseconds.x)) |>"
+"0","  group_by(raceId, driverId) |>"
+"0","  summarize(avg_lap_time = mean(milliseconds, na.rm = T))"
+"2","Warning:"
+"2"," [38;5;232mThere were 9088 warnings in `summarize()`.
+The first warning was:[39m
+[38;5;232m[36mℹ[38;5;232m In argument: `avg_lap_time = mean(milliseconds, na.rm = T)`.
+[36mℹ[38;5;232m In group 1: `raceId = 1` and `driverId = 1`.[39m
+Caused by warning in `mean.default()`:
+[33m![39m argument is not numeric or logical: returning NA
+[38;5;232m[36mℹ[38;5;232m Run ]8;;ide:run:dplyr::last_dplyr_warnings()dplyr::last_dplyr_warnings()]8;; to see the 9087 remaining warnings.[39m
+"
+"1","[38;5;232m`summarise()` has grouped output by 'raceId'. You can override using the `.groups`
+argument.[39m
+"
+"0","head(avg_lap_time)"

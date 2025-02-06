@@ -1,0 +1,2 @@
+"0","merged_construct = merge(driver_data, constructors, by = ""constructorId"")"
+"0","head(merged_construct)"

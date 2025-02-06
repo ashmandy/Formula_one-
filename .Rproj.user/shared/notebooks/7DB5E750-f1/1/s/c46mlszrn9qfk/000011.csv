@@ -1,0 +1,4 @@
+"0","hamilton_data = Hamilton_st |>"
+"0","  select(YEAR,PTS, WINS) |>"
+"0","  rename(year = YEAR, hamilton_points = PTS,hamilton_wins = WINS)"
+"0","head(hamilton_data,50)"

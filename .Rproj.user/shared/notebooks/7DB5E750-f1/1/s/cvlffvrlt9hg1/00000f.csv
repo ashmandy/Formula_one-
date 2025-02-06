@@ -1,0 +1,6 @@
+"0","correlation = cor(pit_stops_summary$avg_pit_duration, pit_stops_summary$finishing_position, use = ""complete.obs"" )"
+"0","head(correlation)"
+"1","[1]"
+"1"," 0.07733555"
+"1","
+"

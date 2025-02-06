@@ -1,0 +1,4 @@
+"0","constructor_summary_with_names = constructor_summary |>"
+"0","  left_join(constructors, by = ""constructorId"") |>"
+"0","  mutate(constructor_name = name)"
+"0","head(constructor_summary_with_names)"

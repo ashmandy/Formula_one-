@@ -1,0 +1,6 @@
+"0","total_constrcutor_races = top_constructors |>"
+"0","  group_by(constructor_name) |>"
+"0","  summarize("
+"0","    total_races =sum(total_races, na.rm = TRUE)"
+"0","  )"
+"0","head(total_constrcutor_races)"

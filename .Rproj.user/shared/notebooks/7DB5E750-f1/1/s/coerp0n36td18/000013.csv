@@ -1,0 +1,2 @@
+"0","qualifying = read.csv(here::here(""qualifying.csv""))"
+"0","head(qualifying)"
