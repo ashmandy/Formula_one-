@@ -11,9 +11,10 @@ library(ggthemes)
 library(tidyverse)
 library(dplyr)
 library(knitr)
+library(forecast)
 ```
 
-Reading my datasets,producing a table and column names. This code below is reading my driver standing csv.
+Reading my data sets,producing a table and column names. This code below is reading my driver standing csv.
 
 ```{r}
 driver_standings = read.csv(here::here("driver_standings.csv"))
@@ -681,7 +682,7 @@ head(ferrari_comb,20)
 ```
 
 ```{r}
-ferrari_comb = ferrari_data |>
+ferrari_comb = Ferrari_data |>
   group_by(year) |>
   summarize(
     total_points = max(points.x, na.rm = TRUE),
@@ -694,14 +695,14 @@ head(ferrari_comb, 70)
 Debugging, the race win for 2007 is 9 not 17. all atemps made to fix this failed.
 
 ```{r}
-ferrari_wins_check = ferrari_data |>
+ferrari_wins_check = Ferrari_data |>
   select(year, raceId, wins) |>
   arrange(year, raceId)
 head(ferrari_wins_check,20)
 ```
 
 ```{r}
-ferrari_2007 = ferrari_data |> 
+ferrari_2007 = Ferrari_data |> 
   filter(year == 2007, wins > 0) |>
   distinct(raceId) |>
   count()
